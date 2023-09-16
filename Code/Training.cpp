@@ -1,17 +1,43 @@
-/* g++ knn_training.cpp -o knn_training `pkg-config --cflags --libs opencv4` */
 #include <opencv2/opencv.hpp>
 #include <vector>
+#include <iostream>
 
 int main() {
+    std::vector<cv::Mat> imagesForObjectA;
+    std::vector<cv::Mat> imagesForObjectB;
+
+    // Load and preprocess images for object A
+    for (int i = 184; i <= 220; ++i) {
+        std::string path = "images/object_A/IMG_0" + std::to_string(i) + ".jpg";
+        cv::Mat img = cv::imread(path);
+        if (img.empty()) {
+            std::cout << "Could not read the image at path: " << path << std::endl;
+            return 1;
+        }
+        cv::resize(img, img, cv::Size(64, 64));
+        cv::cvtColor(img, img, cv::COLOR_BGR2GRAY);
+        imagesForObjectA.push_back(img);
+    }
+
+    // Load and preprocess images for object B
+    for (int i = 116; i <= 183; ++i) {
+        std::string path = "images/object_B/IMG_0" + std::to_string(i) + ".jpg";
+        cv::Mat img = cv::imread(path);
+        if (img.empty()) {
+            std::cout << "Could not read the image at path: " << path << std::endl;
+            return 1;
+        }
+        cv::resize(img, img, cv::Size(64, 64));
+        cv::cvtColor(img, img, cv::COLOR_BGR2GRAY);
+        imagesForObjectB.push_back(img);
+    }
+
     // Initialize k-NN algorithm
     cv::Ptr<cv::ml::KNearest> knn = cv::ml::KNearest::create();
 
     // Prepare your data: flatten the image and put all in one big matrix
-    int numSamples = 20; // Assuming you have 20 samples for each object (you
-                         // can adjust this number)
-    cv::Mat samples(numSamples * 2,
-                    256 * 256,
-                    CV_32F); // Assuming your images are resized to 256x256
+    int numSamples = 20;
+    cv::Mat samples(numSamples * 2, 64 * 64, CV_32F);
 
     for (int i = 0; i < numSamples; ++i) {
         cv::Mat imgA = imagesForObjectA[i].clone().reshape(1, 1);
@@ -29,7 +55,8 @@ int main() {
     // Train k-NN
     knn->train(samples, cv::ml::ROW_SAMPLE, labels);
 
-    // Now you can use knn->findNearest() to classify new samples
-    // ...
+    // At this point, the k-NN model is trained.
+    // You can use knn->findNearest() to classify new samples in real-time.
+
     return 0;
 }
